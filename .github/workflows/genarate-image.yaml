@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main # mainブランチにプッシュされたときに実行される
+  schedule:
+    - cron: "0 15 * * *" # UTCで毎日15時（JSTで毎日0時）に実行される
 
 jobs:
   generate_image:

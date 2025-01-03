@@ -1,0 +1,43 @@
+name: Generate and Save Image
+
+on:
+  push:
+    branches:
+      - main # mainブランチにプッシュされたときに実行される
+
+jobs:
+  generate_image:
+    runs-on: ubuntu-latest
+
+    steps:
+      # リポジトリのコードをチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Node.jsをセットアップ
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20" # 使用するNode.jsのバージョンを指定
+
+      # 依存関係をインストール
+      - name: Install dependencies
+        run: npm install
+
+      # 画像を生成
+      - name: Generate image
+        run: npm start
+
+      # gifディレクトリを確認して、変更がある場合にブランチを作成してコミット
+      - name: Commit generated image
+        run: |
+          # gifディレクトリ内の変更を確認
+          git add gif/
+          git diff --cached --exit-code || echo "Changes detected, committing new image"
+          git commit -m "Add generated image"
+
+      # 固定のブランチ名"artifact"を作成してpush
+      - name: Push changes to artifact branch
+        run: |
+          git checkout -b artifact
+          git push -f origin artifact  # 強制プッシュしてリモートの"artifact"ブランチに上書き

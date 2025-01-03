@@ -40,13 +40,11 @@ jobs:
       - name: Generate image
         run: npm start
 
-      # gifディレクトリを確認して、変更がある場合にブランチを作成してコミット
+      # gifディレクトリを確認して、変更があろうとなかろうとコミット
       - name: Commit generated image
         run: |
-          # gifディレクトリ内の変更を確認
           git add gif/
-          git diff --cached --exit-code || echo "Changes detected, committing new image"
-          git commit -m "Add generated image"
+          git commit -m "Add generated image" || echo "No changes to commit"
 
       # 固定のブランチ名"artifact"を作成してpush
       - name: Push changes to artifact branch

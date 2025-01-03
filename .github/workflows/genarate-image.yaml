@@ -26,6 +26,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fonts-dejavu fonts-lato fonts-liberation fonts-noto
 
+      # Gitユーザー名とメールアドレスを設定
+      - name: Set Git user name and email
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
       # 依存関係をインストール
       - name: Install dependencies
         run: npm install

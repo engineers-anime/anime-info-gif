@@ -5,16 +5,18 @@ import RSSParser from "rss-parser";
 import axios from "axios";
 
 const width = 800; // GIFの幅
-const height = 100; // GIFの高さ
+const height = 70; // GIFの高さ
 const delay = 100; // フレーム遅延 (ms)
 const fontSize = 20; // フォントサイズ
 
 type RSSItem = {
   title: string;
-  date: string;
+  "dc:date": string;
+  "dc:publisher": string;
 };
 
 type RSSFeed = {
+  description: string;
   items: RSSItem[];
 };
 
@@ -22,24 +24,29 @@ async function fetchRSSData(
   url: string
 ): Promise<{ todayText: string; todayItemsCount: number }> {
   const response = await axios.get(url);
-  const parser = new RSSParser();
+  // RSSParserをカスタマイズしてインスタンスを作成
+  const parser = new RSSParser({
+    customFields: {
+      item: ["dc:date", "dc:publisher"], // itemレベルでdc:publisherを追加
+    },
+  });
   const feed = (await parser.parseString(response.data)) as RSSFeed;
-
-  // 今日の日付を取得
-  const today = new Date().toISOString().slice(0, 10);
+  // ルートレベルのdescriptionを取得
+  const feedDescription = (feed.description || "").replace(/\s+/g, "");
 
   // 今日の番組を取得
-  const todayItems = feed.items.filter((item) => {
-    const pubDate = new Date(item.date).toISOString().slice(0, 10);
-    return pubDate === today;
-  });
+  const allItems = feed.items;
 
   // タイトルを結合して返す
-  const todayText =
-    todayItems.map((item) => item.title).join(" / ") || "No programs today.";
+  let todayText = `アニメ配信開始・放送情報 ${feedDescription} / `;
+  todayText =
+    todayText +
+      allItems
+        .map((item) => `${item.title}[${item["dc:publisher"] || "不明"}]`)
+        .join(" / ") || "情報がありません。";
 
   // todayItemsの数を返す
-  return { todayText, todayItemsCount: todayItems.length };
+  return { todayText, todayItemsCount: allItems.length };
 }
 
 async function createGIF(text: string, todayItemsCount: number): Promise<void> {
@@ -59,8 +66,8 @@ async function createGIF(text: string, todayItemsCount: number): Promise<void> {
   // テキストの幅を計算
   const textWidth = ctx.measureText(text).width;
 
-  // フレーム数をtodayItemsの100倍に設定
-  const totalFrames = todayItemsCount * 100; // todayItemsの数に100を掛けたフレーム数
+  // フレーム数をtodayItemsの100倍 + 150に設定
+  const totalFrames = todayItemsCount * 150 + 150; // todayItemsの数に100を掛けたフレーム数
 
   for (let i = 0; i < totalFrames; i++) {
     ctx.clearRect(0, 0, width, height); // 画面をクリア

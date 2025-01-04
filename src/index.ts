@@ -6,7 +6,7 @@ import axios from "axios";
 
 const width = 800; // GIFの幅
 const height = 70; // GIFの高さ
-const delay = 70; // フレーム遅延 (ms)
+const delay = 100; // フレーム遅延 (ms)
 const fontSize = 20; // フォントサイズ
 
 type RSSItem = {
@@ -66,8 +66,8 @@ async function createGIF(text: string, todayItemsCount: number): Promise<void> {
   // テキストの幅を計算
   const textWidth = ctx.measureText(text).width;
 
-  // フレーム数をtodayItemsの100倍 + 150に設定
-  const totalFrames = todayItemsCount * 150 + 150; // todayItemsの数に100を掛けたフレーム数
+  // フレーム数をtodayItemsの100倍 + 100に設定
+  const totalFrames = todayItemsCount * 100 + 100; // todayItemsの数に100を掛けたフレーム数
 
   for (let i = 0; i < totalFrames; i++) {
     ctx.clearRect(0, 0, width, height); // 画面をクリア

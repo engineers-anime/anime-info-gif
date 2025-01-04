@@ -6,7 +6,7 @@ import axios from "axios";
 
 const width = 800; // GIFの幅
 const height = 70; // GIFの高さ
-const delay = 100; // フレーム遅延 (ms)
+const delay = 70; // フレーム遅延 (ms)
 const fontSize = 20; // フォントサイズ
 
 type RSSItem = {
@@ -42,7 +42,7 @@ async function fetchRSSData(
   todayText =
     todayText +
       allItems
-        .map((item) => `${item.title}[${item["dc:publisher"] || "不明"}]`)
+        .map((item) => `${item.title} [${item["dc:publisher"] || "不明"}]`)
         .join(" / ") || "情報がありません。";
 
   // todayItemsの数を返す

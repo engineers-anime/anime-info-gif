@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx tsc && node lib/index.js"
+    "start:anime": "npx tsc && node lib/anime.js",
+    "start:imas": "npx tsc && node lib/imas.js",
+    "start": "npm run start:anime && npm run start:imas"
   },
   "keywords": [],
   "author": "",

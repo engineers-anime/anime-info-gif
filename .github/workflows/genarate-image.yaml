@@ -42,7 +42,7 @@ jobs:
       - name: Generate image
         run: |
           echo "Running npm start to generate image..."
-          npm start
+          npm run start
           echo "Image generation complete."
 
       # 画像が生成されているか確認

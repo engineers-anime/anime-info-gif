@@ -34,12 +34,20 @@ jobs:
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
 
+      # タイムゾーンを指定
+      - name: Set timezone to JST
+        run: |
+          sudo ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+          echo 'Asia/Tokyo' | sudo tee /etc/timezone
+
       # 依存関係をインストール
       - name: Install dependencies
         run: npm install
 
       # 画像を生成
       - name: Generate image
+        env:
+          TZ: Asia/Tokyo
         run: |
           echo "Running npm start to generate image..."
           npm run start

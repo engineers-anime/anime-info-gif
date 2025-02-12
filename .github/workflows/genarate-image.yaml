@@ -10,11 +10,16 @@ on:
 jobs:
   generate_image:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # リポジトリへの書き込み権限を明示的に設定
 
     steps:
       # リポジトリのコードをチェックアウト
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # GitHub Tokenを明示的に指定
+          persist-credentials: true # 認証情報を保持
 
       # Node.jsをセットアップ
       - name: Set up Node.js
@@ -83,6 +88,8 @@ jobs:
 
       # 固定のブランチ名"artifact"を作成してpush
       - name: Push changes to artifact branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub Tokenを環境変数として設定
         run: |
           echo "Switching to artifact branch..."
           git checkout -b artifact

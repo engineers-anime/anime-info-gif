@@ -9,7 +9,9 @@ const delay = 100; // フレーム遅延 (ms)
 const fontSize = 20; // フォントサイズ
 
 // 今日の日付を取得 (YYYY-MM-DD形式)
-const today = new Date();
+const today = new Date(
+  new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
+);
 
 type Idol = {
   name: string;
@@ -19,7 +21,13 @@ type Idol = {
 async function fetchIdolData(): Promise<{
   idols: Idol[];
 }> {
-  const todayDate = today.toISOString().slice(5, 10); // "MM-DD"の部分を取り出す
+  const todayDate = today
+    .toLocaleString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      timeZone: "Asia/Tokyo",
+    })
+    .replace("/", "-"); // "MM-DD"形式に変換
 
   const query = `
       PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>

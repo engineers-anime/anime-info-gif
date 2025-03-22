@@ -117,24 +117,14 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-          # 現在のブランチの状態を保存
-          git stash push --include-untracked
-
           # 新しい空のブランチを作成
           git checkout --orphan artifact
-
-          # 全てのファイルをステージングから削除
-          git rm -rf --cached .
 
           # gifディレクトリのみを追加
           git add gif/
 
           # コミット
-          git commit -m "Update generated images" || echo "No changes to commit"
+          git commit -m "Update generated images"
 
           # artifactブランチに強制プッシュ
           git push -f origin artifact
-
-          # 元のブランチに戻る
-          git checkout -
-          git stash pop || true

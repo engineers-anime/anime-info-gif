@@ -30,6 +30,11 @@ jobs:
           git submodule update --init --recursive
           cd ..
 
+      - name: Install required fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu fonts-lato fonts-liberation fonts-noto
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

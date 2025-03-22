@@ -36,17 +36,24 @@ async function fetchRSSData(
 
   // 今日の番組を取得
   const allItems = feed.items;
+  const displayItems = allItems.slice(0, 10);
+  const hasMoreItems = allItems.length > 10;
 
   // タイトルを結合して返す
   let todayText = `アニメ配信開始・放送情報 ${feedDescription} / `;
   todayText =
     todayText +
-      allItems
-        .map((item) => `${item.title} [${item["dc:publisher"] || "不明"}]`)
-        .join(" / ") || "情報がありません。";
+    displayItems
+      .map((item) => `${item.title} [${item["dc:publisher"] || "不明"}]`)
+      .join(" / ");
 
-  // todayItemsの数を返す
-  return { todayText, todayItemsCount: allItems.length };
+  // 10件以上ある場合、追加メッセージを表示
+  if (hasMoreItems) {
+    todayText += ` / 続きはしょぼいカレンダー(https://cal.syoboi.jp/)で確認してください`;
+  }
+
+  // todayItemsの数を返す（表示件数を返す）
+  return { todayText, todayItemsCount: displayItems.length };
 }
 
 async function createGIF(text: string, todayItemsCount: number): Promise<void> {

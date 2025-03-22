@@ -46,9 +46,12 @@ async function fetchIdolData(): Promise<{
       GROUP BY (?n) 
       ORDER BY (?name)
     `;
-  const url = `https://sparql.crssnky.xyz/spql/imas/query?query=${encodeURIComponent(
+
+  // ローカルのDockerサーバーのURLに変更
+  const url = `http://localhost:3030/imasparql/query?query=${encodeURIComponent(
     query
   )}`;
+
   const response = await axios.get(url);
   const data = response.data.results.bindings;
 

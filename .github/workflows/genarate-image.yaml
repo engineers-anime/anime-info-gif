@@ -77,6 +77,8 @@ jobs:
         run: |
           echo "Running npm start to generate image..."
           date  # 現在の時刻を確認
+          mkdir -p /tmp/gif
+          mv gif/* /tmp/gif/ || true  # 既存のGIFファイルを一時ディレクトリに移動
           npm run start
           echo "Image generation complete."
 
@@ -105,16 +107,21 @@ jobs:
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # PR時の処理
+            # PR時は自分のブランチにコミット
             BRANCH_NAME="${{ github.head_ref }}"
             git fetch origin $BRANCH_NAME
             git checkout $BRANCH_NAME
+            
+            # GIFファイルを配置
+            mkdir -p gif/
+            mv /tmp/gif/* gif/ || true
+
+            # 変更をコミットしてプッシュ
             git add gif/
             git commit -m "Update generated images" || exit 0
             git push origin $BRANCH_NAME
           else
-            # mainブランチまたはスケジュール実行時の処理
-            # artifactブランチの存在確認と作成
+            # PR以外（mainへのプッシュやスケジュール実行）時はartifactブランチにコミット
             if ! git ls-remote --heads origin artifact > /dev/null; then
               # artifactブランチが存在しない場合、空のブランチを作成
               git checkout --orphan artifact
@@ -123,15 +130,16 @@ jobs:
             else
               # artifactブランチが存在する場合、チェックアウト
               git fetch origin artifact
-              git checkout artifact
+              git checkout artifact || git checkout --orphan artifact
             fi
 
-            # 既存のgifディレクトリをクリーンアップ
-            rm -rf gif/
-            mkdir -p gif/
+            # ワークツリーをクリーンな状態にする
+            git rm -rf . || true
+            git clean -fdx
 
-            # 生成されたGIFファイルをコピー
-            cp -r /tmp/gif/* gif/ || true
+            # GIFファイルを配置
+            mkdir -p gif/
+            mv /tmp/gif/* gif/ || true
 
             # 変更をコミットしてプッシュ
             git add gif/

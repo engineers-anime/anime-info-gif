@@ -110,19 +110,27 @@ jobs:
           echo "Checking git status..."
           git status
 
-      # gifディレクトリを確認して、変更があろうとなかろうとコミット
-      - name: Commit generated image
+      # gifディレクトリのみを新しいブランチにコミット
+      - name: Commit and push gif directory only
         run: |
-          echo "Adding changes..."
-          git add gif/
-          echo "Git status after add:"
-          git status
-          git commit -m "Add generated image" || echo "No changes to commit"
+          # 現在のブランチの状態を保存
+          git stash push --include-untracked
 
-      # 固定のブランチ名"artifact"を作成してpush
-      - name: Push changes to artifact branch
-        run: |
-          echo "Switching to artifact branch..."
-          git checkout -b artifact
-          echo "Pushing changes to artifact branch..."
-          git push -f origin artifact  # 強制プッシュしてリモートの"artifact"ブランチに上書き
+          # 新しい空のブランチを作成
+          git checkout --orphan artifact
+
+          # 全てのファイルをステージングから削除
+          git rm -rf --cached .
+
+          # gifディレクトリのみを追加
+          git add gif/
+
+          # コミット
+          git commit -m "Update generated images" || echo "No changes to commit"
+
+          # artifactブランチに強制プッシュ
+          git push -f origin artifact
+
+          # 元のブランチに戻る
+          git checkout -
+          git stash pop || true

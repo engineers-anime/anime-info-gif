@@ -11,6 +11,9 @@ on:
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/**"
+  push:
+    branches:
+      - main # mainブランチへのプッシュ時に実行
 
 jobs:
   generate:
@@ -95,26 +98,43 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # PRの場合はブランチ名を取得
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            BRANCH_NAME="${{ github.head_ref }}"
-            git fetch origin $BRANCH_NAME
-            git checkout $BRANCH_NAME
-          else
-            git checkout main || git checkout master
-          fi
-
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
           # リモートURLをトークン付きに変更
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
-          git add gif/
-          git commit -m "Update generated images" || exit 0
-
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # PR時の処理
+            BRANCH_NAME="${{ github.head_ref }}"
+            git fetch origin $BRANCH_NAME
+            git checkout $BRANCH_NAME
+            git add gif/
+            git commit -m "Update generated images" || exit 0
             git push origin $BRANCH_NAME
           else
-            git push origin HEAD:main || git push origin HEAD:master
+            # mainブランチまたはスケジュール実行時の処理
+            # artifactブランチの存在確認と作成
+            if ! git ls-remote --heads origin artifact > /dev/null; then
+              # artifactブランチが存在しない場合、空のブランチを作成
+              git checkout --orphan artifact
+              git rm -rf .
+              git commit --allow-empty -m "Initial artifact branch"
+            else
+              # artifactブランチが存在する場合、チェックアウト
+              git fetch origin artifact
+              git checkout artifact
+            fi
+
+            # 既存のgifディレクトリをクリーンアップ
+            rm -rf gif/
+            mkdir -p gif/
+
+            # 生成されたGIFファイルをコピー
+            cp -r /tmp/gif/* gif/ || true
+
+            # 変更をコミットしてプッシュ
+            git add gif/
+            git commit -m "Update generated images [skip ci]" || exit 0
+            git push origin artifact
           fi

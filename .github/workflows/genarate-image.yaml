@@ -18,7 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true # サブモジュールを取得
+          submodules: "recursive" # サブモジュールを再帰的に取得
+
+      # サブモジュールの初期化を明示的に行う
+      - name: Initialize submodules
+        run: |
+          git submodule update --init --recursive
+          cd local-imasparql
+          git submodule update --init --recursive
+          cd ..
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

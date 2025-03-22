@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: "0 15 * * *" # 日本時間0時に実行
   workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/**"
 
 jobs:
   generate:

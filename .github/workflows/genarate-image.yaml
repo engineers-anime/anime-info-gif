@@ -1,57 +1,47 @@
-name: Generate and Save Image
+name: Generate Image
 
 on:
-  push:
-    branches:
-      - main # mainブランチにプッシュされたときに実行される
   schedule:
-    - cron: "0 15 * * *" # UTCで毎日15時（JSTで毎日0時）に実行される
+    - cron: "0 15 * * *" # 日本時間0時に実行
+  workflow_dispatch:
 
 jobs:
-  generate_image:
+  generate:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # リポジトリへの書き込み権限を明示的に設定
-
     steps:
-      # リポジトリのコードをチェックアウト
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} # GitHub Tokenを明示的に指定
-          persist-credentials: true # 認証情報を保持
+          submodules: true # サブモジュールを取得
 
-      # Node.jsをセットアップ
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "20" # 使用するNode.jsのバージョンを指定
+          node-version: "20"
 
-      # 必要なフォントをインストール
-      - name: Install required fonts
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-dejavu fonts-lato fonts-liberation fonts-noto
-
-      # Gitユーザー名とメールアドレスを設定
-      - name: Set Git user name and email
-        run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
-
-      # タイムゾーンを指定
-      - name: Set timezone to JST
-        run: |
-          sudo ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-          echo 'Asia/Tokyo' | sudo tee /etc/timezone
-          echo "LANG=ja_JP.UTF-8" | sudo tee -a /etc/environment
-          echo "LC_ALL=ja_JP.UTF-8" | sudo tee -a /etc/environment
-          sudo locale-gen ja_JP.UTF-8
-          sudo dpkg-reconfigure --frontend noninteractive tzdata
-
-      # 依存関係をインストール
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      # local-imasparqlの起動
+      - name: Start local im@sparql
+        env:
+          TZ: Asia/Tokyo
+          LANG: ja_JP.UTF-8
+          LC_ALL: ja_JP.UTF-8
+        run: |
+          echo "Starting local im@sparql..."
+          cd local-imasparql
+          docker compose up -d
+          # SPARQLエンドポイントの起動を待つ
+          echo "Waiting for SPARQL endpoint to be ready..."
+          sleep 10
+          # エンドポイントの動作確認
+          curl -s "http://localhost:3030/imasparql/query" > /dev/null
+          if [ $? -ne 0 ]; then
+            echo "Failed to start SPARQL endpoint"
+            exit 1
+          fi
+          echo "SPARQL endpoint is ready"
+          cd ..
 
       # 画像を生成
       - name: Generate image
@@ -65,33 +55,24 @@ jobs:
           npm run start
           echo "Image generation complete."
 
-      # 画像が生成されているか確認
-      - name: Check generated image
-        run: |
-          echo "Checking gif directory contents..."
-          ls -l gif/
-
-      # gitの状態を確認
-      - name: Check git status
-        run: |
-          echo "Checking git status..."
-          git status
-
-      # gifディレクトリを確認して、変更があろうとなかろうとコミット
-      - name: Commit generated image
-        run: |
-          echo "Adding changes..."
-          git add gif/
-          echo "Git status after add:"
-          git status
-          git commit -m "Add generated image" || echo "No changes to commit"
-
-      # 固定のブランチ名"artifact"を作成してpush
-      - name: Push changes to artifact branch
+      # local-imasparqlの停止
+      - name: Stop local im@sparql
+        if: always() # エラーが発生しても必ず実行
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub Tokenを環境変数として設定
+          TZ: Asia/Tokyo
+          LANG: ja_JP.UTF-8
+          LC_ALL: ja_JP.UTF-8
         run: |
-          echo "Switching to artifact branch..."
-          git checkout -b artifact
-          echo "Pushing changes to artifact branch..."
-          git push -f origin artifact  # 強制プッシュしてリモートの"artifact"ブランチに上書き
+          echo "Stopping local im@sparql..."
+          cd local-imasparql
+          docker compose down
+          cd ..
+
+      # 生成された画像をコミット
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add gif/
+          git commit -m "Update generated images" || exit 0
+          git push

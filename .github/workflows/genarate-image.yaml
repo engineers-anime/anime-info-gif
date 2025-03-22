@@ -67,7 +67,7 @@ jobs:
         run: |
           echo "Running npm start to generate image..."
           date  # 現在の時刻を確認
-          npm run start
+          npm run start:imas # TODO: アイマスの画像のみ生成、後で直す
           echo "Image generation complete."
 
       # local-imasparqlの停止

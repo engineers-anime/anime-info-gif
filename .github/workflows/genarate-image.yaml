@@ -113,6 +113,10 @@ jobs:
       # gifディレクトリのみを新しいブランチにコミット
       - name: Commit and push gif directory only
         run: |
+          # Git設定を追加
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
           # 現在のブランチの状態を保存
           git stash push --include-untracked
 

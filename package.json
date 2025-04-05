@@ -1,0 +1,26 @@
+{
+  "name": "anime-info-gif",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:anime": "npx tsc && node lib/anime.js",
+    "start:imas": "npx tsc && node lib/imas.js",
+    "start": "npm run start:anime && npm run start:imas"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/gif-encoder": "^0.7.4",
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "canvas": "^3.0.1",
+    "gif-encoder": "^0.7.2",
+    "rss-parser": "^3.13.0"
+  }
+}

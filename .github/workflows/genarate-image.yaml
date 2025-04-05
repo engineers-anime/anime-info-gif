@@ -1,0 +1,130 @@
+name: Generate Image
+
+on:
+  schedule:
+    - cron: "0 15 * * *" # 日本時間0時に実行
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/**"
+  push:
+    branches:
+      - main # mainブランチへのプッシュ時に実行
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # リポジトリへの書き込み権限を追加
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive" # サブモジュールを再帰的に取得
+
+      # サブモジュールの初期化を明示的に行う
+      - name: Initialize submodules
+        run: |
+          git submodule update --init --recursive
+          cd local-imasparql
+          git submodule update --init --recursive
+          cd ..
+
+      # 必要なフォントのインストール
+      - name: Install required fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu fonts-lato fonts-liberation fonts-noto
+
+      # Node.jsのインストール
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # 依存パッケージのインストール
+      - name: Install dependencies
+        run: npm ci
+
+      # local-imasparqlの起動
+      - name: Start local im@sparql
+        env:
+          TZ: Asia/Tokyo
+          LANG: ja_JP.UTF-8
+          LC_ALL: ja_JP.UTF-8
+        run: |
+          echo "Starting local im@sparql..."
+          cd local-imasparql
+          docker compose up -d
+          # SPARQLエンドポイントの起動を待つ
+          echo "Waiting for SPARQL endpoint to be ready..."
+          sleep 10
+          # エンドポイントの動作確認
+          curl -s "http://localhost:3030/imasparql/query" > /dev/null
+          if [ $? -ne 0 ]; then
+            echo "Failed to start SPARQL endpoint"
+            exit 1
+          fi
+          echo "SPARQL endpoint is ready"
+          cd ..
+
+      # 画像を生成
+      - name: Generate image
+        env:
+          TZ: Asia/Tokyo
+          LANG: ja_JP.UTF-8
+          LC_ALL: ja_JP.UTF-8
+        run: |
+          echo "Running npm start to generate image..."
+          date  # 現在の時刻を確認
+          mkdir -p /tmp/gif
+          mv gif/* /tmp/gif/ || true  # 既存のGIFファイルを一時ディレクトリに移動
+          npm run start
+          echo "Image generation complete."
+
+      # local-imasparqlの停止
+      - name: Stop local im@sparql
+        if: always() # エラーが発生しても必ず実行
+        env:
+          TZ: Asia/Tokyo
+          LANG: ja_JP.UTF-8
+          LC_ALL: ja_JP.UTF-8
+        run: |
+          echo "Stopping local im@sparql..."
+          cd local-imasparql
+          docker compose down
+          cd ..
+
+      # 画像が生成されているか確認
+      - name: Check generated image
+        run: |
+          echo "Checking gif directory contents..."
+          ls -l gif/
+
+      # gitの状態を確認
+      - name: Check git status
+        run: |
+          echo "Checking git status..."
+          git status
+
+      # gifディレクトリのみを新しいブランチにコミット
+      - name: Commit and push gif directory only
+        run: |
+          # Git設定を追加
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+          # 新しい空のブランチを作成
+          git checkout --orphan artifact
+
+          # gifディレクトリのみを追加
+          git add gif/
+
+          # コミット
+          git commit -m "Update generated images"
+
+          # artifactブランチに強制プッシュ
+          git push -f origin artifact

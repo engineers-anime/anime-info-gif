@@ -39,6 +39,10 @@ bower_components
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
+# Generated GIF images (keep the directory placeholder tracked)
+gif/*
+!gif/.gitkeep
+
 # Dependency directories
 node_modules/
 jspm_packages/

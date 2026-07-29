@@ -49,6 +49,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # 型・Lint・フォーマットを検査
+      - name: Check code quality
+        run: npm run check
+
       # local-imasparqlの起動
       - name: Start local im@sparql
         env:

@@ -10,12 +10,27 @@ const fontSize = 20; // フォントサイズ
 
 // 今日の日付を取得 (YYYY-MM-DD形式)
 const today = new Date(
-  new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
+  new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }),
 );
 
 type Idol = {
   name: string;
   color: string;
+};
+
+type SparqlBinding = {
+  name: {
+    value: string;
+  };
+  color?: {
+    value: string;
+  };
+};
+
+type SparqlResponse = {
+  results: {
+    bindings: SparqlBinding[];
+  };
 };
 
 async function fetchIdolData(): Promise<{
@@ -49,14 +64,14 @@ async function fetchIdolData(): Promise<{
 
   // ローカルのDockerサーバーのURLに変更
   const url = `http://localhost:3030/imasparql/query?query=${encodeURIComponent(
-    query
+    query,
   )}`;
 
-  const response = await axios.get(url);
+  const response = await axios.get<SparqlResponse>(url);
   const data = response.data.results.bindings;
 
   // データを抽出して処理
-  const idols: Idol[] = data.map((item: any) => ({
+  const idols: Idol[] = data.map((item) => ({
     name: item.name.value,
     color: item.color?.value || "000000", // 色がない場合は黒
   }));
@@ -73,9 +88,9 @@ async function createGIF(idols: Idol[]): Promise<void> {
   // 表示する文字列
   const todayTextDate = `${String(today.getMonth() + 1).padStart(
     2,
-    "0"
+    "0",
   )}月${String(today.getDate()).padStart(2, "0")}日`;
-  let text =
+  const text =
     idols.map((idol) => idol.name).join(" / ") ||
     `${todayTextDate}誕生日の人おめでとう!`;
 

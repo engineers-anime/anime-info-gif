@@ -37,7 +37,7 @@ function formatFeedDescription(description: string): string {
 }
 
 async function fetchRSSData(
-  url: string
+  url: string,
 ): Promise<{ todayText: string; todayItemsCount: number }> {
   const response = await axios.get(url);
   // RSSParserをカスタマイズしてインスタンスを作成

@@ -20,6 +20,22 @@ type RSSFeed = {
   items: RSSItem[];
 };
 
+function formatFeedDescription(description: string): string {
+  const normalizedDescription = description.replace(/\s+/g, " ").trim();
+  const timestampPattern =
+    /\((\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):\d{2}\)/;
+  const match = normalizedDescription.match(timestampPattern);
+
+  if (!match) {
+    return normalizedDescription;
+  }
+
+  const [, , month, day, hour, minute] = match;
+  const readableTimestamp = `（更新: ${Number(month)}月${Number(day)}日 ${hour}:${minute}）`;
+
+  return normalizedDescription.replace(timestampPattern, readableTimestamp);
+}
+
 async function fetchRSSData(
   url: string
 ): Promise<{ todayText: string; todayItemsCount: number }> {
@@ -32,7 +48,7 @@ async function fetchRSSData(
   });
   const feed = (await parser.parseString(response.data)) as RSSFeed;
   // ルートレベルのdescriptionを取得
-  const feedDescription = (feed.description || "").replace(/\s+/g, "");
+  const feedDescription = formatFeedDescription(feed.description || "");
 
   // 今日の番組を取得
   const allItems = feed.items;

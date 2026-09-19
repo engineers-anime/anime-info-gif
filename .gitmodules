@@ -1,0 +1,3 @@
+[submodule "local-imasparql"]
+	path = local-imasparql
+	url = https://github.com/OHMORIYUSUKE/local-imasparql.git

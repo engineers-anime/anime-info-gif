@@ -1,0 +1,5 @@
+gif/
+lib/
+local-imasparql/
+node_modules/
+package-lock.json
